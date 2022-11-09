@@ -42,4 +42,22 @@ public sealed class UiItemGiftListEntry
         
         return new UiItemGiftListEntry(itemGift, targetUnit, itemName);
     }
+    
+    public static UiItemGiftListEntry TryCreate(GameObject child)
+    {
+        UIButtonMultiBinder binder = child.GetComponent<UIButtonMultiBinder>();
+        if (binder is null)
+            return null;
+
+        UIData data = binder.UIDataProxy;
+        if (data is null)
+            return null;
+        
+        UITemplateData_ListDataItemGift itemGift = data.TryCast<UITemplateData_ListDataItemGift>();
+        PDUnit targetUnit = itemGift.Target.TargetUnit.PDUnit;
+
+        Text itemName = child.transform.FindChild("Text_Name").GetComponent<Text>();
+        
+        return new UiItemGiftListEntry(itemGift, targetUnit, itemName);
+    }
 }

@@ -6,6 +6,7 @@ using Memoria.LostEidolons.BeepInEx;
 using Memoria.LostEidolons.Configuration;
 using Memoria.LostEidolons.IL2CPP;
 using Memoria.LostEidolons.UnityProxies;
+using TriangleNet;
 using UnhollowerBaseLib;
 using UnityEngine;
 using US.Client;
@@ -17,27 +18,52 @@ using Object = System.Object;
 namespace Memoria.LostEidolons.HarmonyPatches;
 
 // ReSharper disable InconsistentNaming
-[HarmonyPatch(typeof(Proxy_CampItemGift), nameof(Proxy_CampItemGift.CreateItemGifts))]
-public static class Proxy_CampItemGift_CreateItemGifts
+// [HarmonyPatch(typeof(Proxy_CampItemGift), nameof(Proxy_CampItemGift.CreateItemGifts))]
+// public static class Proxy_CampItemGift_CreateItemGifts
+
+[HarmonyPatch(typeof(UIGOEnableDisableBinder), nameof(UIGOEnableDisableBinder.OnEnable))]
+public static class UIGOEnableDisableBinder_OnEnable
 {
-    public static void Postfix(Proxy_CampItemGift __instance, Boolean __result)
+    public static void Prefix(UIGOEnableDisableBinder __instance, ref Boolean __state)
+    {
+        __state = __instance.isActiveAndEnabled;
+    }
+    
+    public static void Postfix(UIGOEnableDisableBinder __instance, ref Boolean __state)
     {
         try
         {
-            if (!__result)
-                return;
+            // // Skip if entry is already enabled
+            // if (__state)
+            //     return;
+            //
+            // // Skip if entry is not enabled
+            // if (!__instance.isActiveAndEnabled)
+            //     return;
 
+            if (__instance.name != "ListDataItemGift(Clone)")
+                return;
+            
+            ModComponent.Log.LogMessage(__state);
+            ModComponent.Log.LogMessage(__instance.isActiveAndEnabled);
+            
             CampActivitiesGiftsConfiguration gifts = ModComponent.Instance.Config.CampActivitiesGifts;
             Color? preferredGiftsColor = gifts.ColorizePreferredGifts ? gifts.PreferredGiftsColor : null;
             Color? commonGiftsColor = gifts.ColorizeCommonGifts ? gifts.CommonGiftsColor : null;
             if (preferredGiftsColor is null && commonGiftsColor is null)
                 return;
 
-            UiItemGiftList giftList = UiItemGiftList.FindSingleton();
-            if (giftList is null)
-                return;
+            // UiItemGiftList giftList = UiItemGiftList.FindSingleton();
+            // if (giftList is null)
+            // {
+            //     //ModComponent.Log.LogWarning("Colorization is not working because we cannot find UiItemGiftList.");
+            //     return;
+            // }
 
-            ColorizeGiftItems(giftList, preferredGiftsColor, commonGiftsColor);
+            //ColorizeGiftItems(giftList, preferredGiftsColor, commonGiftsColor);
+
+            UiItemGiftListEntry entry = UiItemGiftListEntry.TryCreate(__instance.gameObject);
+            ColorizeGiftItem(entry, preferredGiftsColor, commonGiftsColor);
         }
         catch (Exception ex)
         {
@@ -45,22 +71,41 @@ public static class Proxy_CampItemGift_CreateItemGifts
         }
     }
 
-    private static void ColorizeGiftItems(UiItemGiftList giftList, Color? preferredGiftsColor, Color? commonGiftsColor)
+    private static void ColorizeGiftItem(UiItemGiftListEntry entry, Color? preferredGiftsColor, Color? commonGiftsColor)
     {
-        HashSet<String> preferredTypeIds = null;
-        foreach (UiItemGiftListEntry entry in giftList.EnumerateEntries())
+        if (entry.IsPreferred())
         {
-            preferredTypeIds ??= entry.TargetUnit.PreferredItemGiftType.ToManaged().Select(type => type.ID).ToHashSet();
-
-            if (preferredTypeIds.Contains(entry.Gift.ItemGift.PDItemGift.PDItemGiftType.ID))
-            {
-                if (preferredGiftsColor is not null)
-                    entry.Name.color = preferredGiftsColor.Value;
-            }
-            else if (commonGiftsColor is not null)
-            {
-                entry.Name.color = commonGiftsColor.Value;
-            }
+            if (preferredGiftsColor is not null)
+                entry.Name.color = preferredGiftsColor.Value;
+        }
+        else if (commonGiftsColor is not null)
+        {
+            entry.Name.color = commonGiftsColor.Value;
         }
     }
+
+    // private static void ColorizeGiftItems(UiItemGiftList giftList, Color? preferredGiftsColor, Color? commonGiftsColor)
+    // {
+    //     HashSet<String> preferredTypeIds = null;
+    //     foreach (UiItemGiftListEntry entry in giftList.EnumerateEntries())
+    //     {
+    //         if (preferredTypeIds == null)
+    //         {
+    //             preferredTypeIds = entry.TargetUnit.PreferredItemGiftType.ToManaged().Select(type => type.ID).ToHashSet();
+    //             ModComponent.Log.LogMessage($"{entry.TargetUnit.ID}'s preferred gifsts: {String.Join(", ", preferredTypeIds)}");
+    //         }
+    //
+    //         if (preferredTypeIds.Contains(entry.Gift.ItemGift.PDItemGift.PDItemGiftType.ID))
+    //         {
+    //             ModComponent.Log.LogMessage($"{entry.Gift.ItemGift.PDItemGift.PDItemGiftType.ID} is preferred");
+    //             if (preferredGiftsColor is not null)
+    //                 entry.Name.color = preferredGiftsColor.Value;
+    //         }
+    //         else if (commonGiftsColor is not null)
+    //         {
+    //             ModComponent.Log.LogMessage($"{entry.Gift.ItemGift.PDItemGift.PDItemGiftType.ID} is not");
+    //             entry.Name.color = commonGiftsColor.Value;
+    //         }
+    //     }
+    // }
 }
