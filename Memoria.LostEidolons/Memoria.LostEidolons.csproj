@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition=" '$(Configuration)' == '' ">Steam</Platform>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+	<ProjectGuid>{7CF67936-43E7-44A6-AF1F-819B5475C216}</ProjectGuid>
+	<RootNamespace>Memoria.LostEidolons</RootNamespace>
+	<TargetFramework>net472</TargetFramework>
+    <ImplicitUsings>false</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+	<AssemblyName>Memoria.LostEidolons.$(Configuration)</AssemblyName>
+	<GameRegistryPath Condition=" '$(Configuration)' == 'Steam' ">HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1580520</GameRegistryPath>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(GameRegistryPath)' != ''">
+    <GamePath Condition="'$(GamePath)' == ''">$([MSBuild]::GetRegistryValueFromView('$(GameRegistryPath)', 'InstallLocation', null, RegistryView.Registry32))</GamePath>
+    <GamePath Condition="'$(GamePath)' == ''">$([MSBuild]::GetRegistryValueFromView('$(GameRegistryPath)', 'InstallLocation', null, RegistryView.Registry64))</GamePath>
+    <GamePath Condition="'$(GamePath)' == ''">bin\$(AssemblyName)</GamePath>
+    <OutputPath>$(GamePath)\BepInEx\plugins\</OutputPath>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Steam\**\*.cs" />	
+    <None Include="Steam\**\*.cs" />
+    <Compile Include="$(Configuration)\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Memoria.CodeGenerator\Memoria.CodeGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(GamePath)\BepInEx\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(GamePath)\BepInEx\core\BepInEx.Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="BepInEx.IL2CPP">
+      <HintPath>$(GamePath)\BepInEx\core\BepInEx.IL2CPP.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="LibAssemblyUnhollower">
+      <HintPath>$(GamePath)\BepInEx\core\LibAssemblyUnhollower.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="MonoMod.Utils">
+      <HintPath>$(GamePath)\BepInEx\core\MonoMod.Utils.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnhollowerBaseLib">
+      <HintPath>$(GamePath)\BepInEx\core\UnhollowerBaseLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine.InputModule">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.InputModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="UnityEngine.UI">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="Assembly-CSharp">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="Shared">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\Shared.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="US.SharedData">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\US.SharedData.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="Il2Cppmscorlib">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\Il2Cppmscorlib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="Sirenix.Serialization.Config">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\Sirenix.Serialization.Config.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+	<Reference Include="Sirenix.Serialization">
+      <HintPath>$(GamePath)\BepInEx\unhollowed\Sirenix.Serialization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  
+  <Target Name="CompileAll" AfterTargets="Build">
+    <MSBuild Condition=" '$(Configuration)' != 'Steam' " Projects="$(MSBuildProjectFile)" Properties="Configuration=Steam" RunEachTargetSeparately="true" BuildInParallel="true" />
+  </Target>
+
+  <Target Name="PublishAll" AfterTargets="Publish">
+      <MSBuild Condition=" '$(Configuration)' != 'Steam' " Projects="$(MSBuildProjectFile)" Properties="Configuration=Steam" Targets="Publish" RunEachTargetSeparately="true" BuildInParallel="true" />
+  </Target>
+
+  <UsingTask TaskName="Memoria.MSBuild.Pack" AssemblyFile="..\MSBuild\Memoria.MSBuild.dll" />
+
+  <Target Name="PublishAll" AfterTargets="Publish">
+      <MSBuild Condition=" '$(Configuration)' != 'Steam' " Projects="$(MSBuildProjectFile)" Properties="Configuration=Steam" Targets="Publish" RunEachTargetSeparately="true" BuildInParallel="true" />
+      <Pack PublishDirectory="..\Publish" Configuration="$(Configuration)" />
+  </Target>
+
+</Project>
