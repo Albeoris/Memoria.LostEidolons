@@ -17,50 +17,21 @@ using Object = System.Object;
 
 namespace Memoria.LostEidolons.HarmonyPatches;
 
-// ReSharper disable InconsistentNaming
-// [HarmonyPatch(typeof(Proxy_CampItemGift), nameof(Proxy_CampItemGift.CreateItemGifts))]
-// public static class Proxy_CampItemGift_CreateItemGifts
-
 [HarmonyPatch(typeof(UIGOEnableDisableBinder), nameof(UIGOEnableDisableBinder.OnEnable))]
 public static class UIGOEnableDisableBinder_OnEnable
 {
-    public static void Prefix(UIGOEnableDisableBinder __instance, ref Boolean __state)
-    {
-        __state = __instance.isActiveAndEnabled;
-    }
-    
-    public static void Postfix(UIGOEnableDisableBinder __instance, ref Boolean __state)
+    public static void Postfix(UIGOEnableDisableBinder __instance)
     {
         try
         {
-            // // Skip if entry is already enabled
-            // if (__state)
-            //     return;
-            //
-            // // Skip if entry is not enabled
-            // if (!__instance.isActiveAndEnabled)
-            //     return;
-
             if (__instance.name != "ListDataItemGift(Clone)")
                 return;
-            
-            ModComponent.Log.LogMessage(__state);
-            ModComponent.Log.LogMessage(__instance.isActiveAndEnabled);
             
             CampActivitiesGiftsConfiguration gifts = ModComponent.Instance.Config.CampActivitiesGifts;
             Color? preferredGiftsColor = gifts.ColorizePreferredGifts ? gifts.PreferredGiftsColor : null;
             Color? commonGiftsColor = gifts.ColorizeCommonGifts ? gifts.CommonGiftsColor : null;
             if (preferredGiftsColor is null && commonGiftsColor is null)
                 return;
-
-            // UiItemGiftList giftList = UiItemGiftList.FindSingleton();
-            // if (giftList is null)
-            // {
-            //     //ModComponent.Log.LogWarning("Colorization is not working because we cannot find UiItemGiftList.");
-            //     return;
-            // }
-
-            //ColorizeGiftItems(giftList, preferredGiftsColor, commonGiftsColor);
 
             UiItemGiftListEntry entry = UiItemGiftListEntry.TryCreate(__instance.gameObject);
             ColorizeGiftItem(entry, preferredGiftsColor, commonGiftsColor);
