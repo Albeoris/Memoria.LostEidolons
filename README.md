@@ -34,3 +34,4 @@ If you playing on Steam Deck check [this page](https://github.com/Albeoris/Memor
 
 ## Screenshots:
 
+![colorize gifts](https://user-images.githubusercontent.com/4787832/200923728-47e7d174-4a29-4d4e-9c0d-1157e26634fb.png)
